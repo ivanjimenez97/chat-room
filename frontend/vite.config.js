@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 //Loading .env variables
-import config from "../config";
+import { SERVER_DOMAIN } from "../config.cjs";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/socket.io": {
-        target: `${config.SERVER_DOMAIN}`,
+        target: SERVER_DOMAIN,
         ws: true,
       },
     },
