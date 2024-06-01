@@ -1,0 +1,48 @@
+// Import all of Bootstrap's CSS
+@import "bootstrap/scss/bootstrap";
+
+body {
+  background-color: #f5f6fa;
+
+  .screen-title {
+    color: $gray-900;
+    font-size: 1.5rem;
+  }
+
+  .chat {
+    min-height: 350px;
+    width: 100%;
+    .content {
+      list-style: none;
+      .item {
+        width: 80%;
+        .name {
+          font-size: 1rem;
+        }
+
+        .message {
+          font-size: 0.75rem;
+        }
+
+        .time {
+          font-size: 0.75rem;
+          margin-bottom: 0;
+        }
+      }
+
+      .current-user {
+        background-color: #f0f0f2;
+        text-align: end;
+        margin-left: auto;
+        border-radius: 50px 30px 0px 50px;
+      }
+
+      .roommate-user {
+        background-color: #ebf3fe;
+        text-align: start;
+        margin-right: auto;
+        border-radius: 30px 50px 50px 0px;
+      }
+    }
+  }
+}
