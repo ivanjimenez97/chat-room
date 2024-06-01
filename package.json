@@ -1,7 +1,7 @@
 {
   "name": "chat-room",
   "version": "1.0.0",
-  "description": "Chat Room built by using nodejs, express, cors, mongoose, momentjs and vuejs as frontend with sass.",
+  "description": "Chat Room built by using nodejs, express, socket.io cors, mongoose, momentjs and vuejs as frontend with sass.",
   "main": "index.js",
   "type": "module",
   "scripts": {
