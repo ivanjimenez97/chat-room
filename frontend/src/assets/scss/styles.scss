@@ -11,22 +11,27 @@ body {
 
   .chat {
     min-height: 350px;
-    width: 100%;
     .content {
       list-style: none;
       .item {
-        width: 80%;
+        max-width: 80%;
+        width: fit-content;
+        min-width: 100px;
         .name {
           font-size: 1rem;
+          margin-bottom: 0.2rem;
         }
 
         .message {
           font-size: 0.75rem;
+          margin-bottom: 0;
         }
 
         .time {
           font-size: 0.75rem;
           margin-bottom: 0;
+          color: $gray-600;
+          font-style: italic;
         }
       }
 

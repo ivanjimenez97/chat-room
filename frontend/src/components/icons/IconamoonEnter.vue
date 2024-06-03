@@ -1,0 +1,23 @@
+<template>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="1.2rem"
+    height="1.2rem"
+    viewBox="0 0 24 24"
+  >
+    <path
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M9 4h10v14a2 2 0 0 1-2 2H9m3-5l3-3m0 0l-3-3m3 3H5"
+    />
+  </svg>
+</template>
+
+<script>
+export default {
+  name: "IconamoonEnter",
+};
+</script>

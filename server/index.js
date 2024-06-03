@@ -12,6 +12,17 @@ const io = new SocketServer(server);
 
 io.on("connection", (socket) => {
   console.log("A User connected");
+  //Receiving Message
+  socket.on("message", (data) => {
+    console.log(data);
+    //updating object to add an user typ:
+    const newData = {
+      ...data,
+      userType: socket.id.slice(6),
+    };
+    //Sending message to the rest of users.
+    socket.broadcast.emit("message", newData);
+  });
 });
 
 server.listen(PORT);
