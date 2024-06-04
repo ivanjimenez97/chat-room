@@ -21,7 +21,7 @@ const emit = defineEmits(["usernameSubmitted"]);
     >
       <h1 class="text-center text-primary fw-bold">Chat Room</h1>
     </div>
-    <div class="card-body">
+    <div class="card-body py-4">
       <form @submit.prevent="userSubmit">
         <div class="row">
           <div class="col-12">
