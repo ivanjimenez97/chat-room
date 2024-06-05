@@ -11,6 +11,8 @@ body {
 
   .chat {
     min-height: 350px;
+    max-height: 450px;
+    overflow-y: scroll;
     .content {
       list-style: none;
       .item {
