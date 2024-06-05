@@ -37,6 +37,10 @@ const receiveMessage = (message) => {
   messages.value.push(message);
 };
 
+socket.on("chat history", (history) => {
+  messages.value = history;
+});
+
 socket.on("message", (message) => {
   console.log(message);
   receiveMessage(message);
@@ -83,8 +87,8 @@ onBeforeUnmount(() => {
             v-for="msg in messages"
             :key="msg.id"
             :class="{
-              'current-user': msg.userType === 'current',
-              'roommate-user': msg.userType !== 'current',
+              'current-user': msg.username === props.username,
+              'roommate-user': msg.username !== props.username,
             }"
             class="item px-3 py-1 mb-4"
           >
