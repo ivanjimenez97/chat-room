@@ -2,9 +2,10 @@
 import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema({
-  userType: { type: String, required: true },
+  userId: { type: String, required: true },
   username: { type: String, required: true },
-  body: { type: String, required: true },
+  body: { type: String, required: false },
+  image: { type: Buffer, required: false },
   time: { type: String, required: true },
 });
 

@@ -3,6 +3,9 @@ import express from "express";
 import { connectDB } from "./db.js";
 import http from "http";
 import { Server as SocketServer } from "socket.io";
+import cors from "cors";
+//Imports for file uploads
+import multer from "multer";
 import Message from "../models/Message.js";
 
 dotenv.config();
@@ -12,6 +15,73 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 const io = new SocketServer(server);
+
+// Add CORS middleware
+app.use(cors());
+
+// this line to parse JSON requests
+app.use(express.json());
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+//Upload Image and send a message
+app.post("/upload", upload.single("image"), async (req, res) => {
+  const { userId, username, time } = req.body;
+
+  const newMessage = new Message({
+    userId,
+    username,
+    image: req.file.buffer,
+    time,
+  });
+
+  try {
+    await newMessage.save();
+    //Sending message to the rest of users (Except the current user).
+    io.emit("message", newMessage);
+    res.status(200).send("Image uploaded successfully");
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error uploading image");
+  }
+});
+
+//Send a message
+app.post("/message", async (req, res) => {
+  const { userId, username, body, time } = req.body;
+
+  const newMessage = new Message({
+    userId,
+    username,
+    body,
+    time,
+  });
+
+  try {
+    await newMessage.save();
+    //Sending message to the rest of users (Except the current user).
+    io.emit("message", newMessage);
+    res.status(200).send("Message sent successfully");
+  } catch (error) {
+    res.status(500).send("Error sending message");
+    console.log(error);
+  }
+});
+
+//Serve images from mongodb as binary data
+app.get("/image/:id", async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.id);
+    if (!message || !message.image) {
+      return res.status(404).send("Image not found");
+    }
+    res.contentType("image/png");
+    res.send(message.image);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error fetching image");
+  }
+});
 
 io.on("connection", (socket) => {
   console.log("New User connected.");
@@ -29,26 +99,6 @@ io.on("connection", (socket) => {
 
   //Welcome current user
   socket.emit("notification", "A user has joined");
-
-  //Receiving data (about the message)
-  socket.on("message", (data) => {
-    console.log(data);
-    //updating object to add an user typ:
-    const newMessage = new Message({
-      userType: data.userType,
-      username: data.username,
-      body: data.body,
-      time: data.time,
-    });
-
-    newMessage
-      .save()
-      .then(() => {
-        //Sending message to the rest of users (Except the current user).
-        socket.broadcast.emit("message", newMessage);
-      })
-      .catch((error) => console.log(error));
-  });
 
   socket.on("disconnect", () => {
     io.emit("notification", "A user left the chat.");

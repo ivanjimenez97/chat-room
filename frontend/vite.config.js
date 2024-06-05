@@ -13,6 +13,11 @@ export default defineConfig({
         target: SERVER_DOMAIN,
         ws: true,
       },
+      "/api": {
+        target: SERVER_DOMAIN,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
     },
   },
 });

@@ -3,32 +3,71 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import io from "socket.io-client";
 import HugeiconsSearch01 from "./icons/HugeiconsSearch01.vue";
 import MingcuteSendLine from "./icons/MingcuteSendLine.vue";
+import MaterialSymbolsImageOutline from "./icons/MaterialSymbolsImageOutline.vue";
 import moment from "moment";
 
 const socket = io("/");
 
 const messages = ref([]);
 const message = ref();
+const image = ref(null);
 
 const props = defineProps({
   username: String,
 });
 
-const handleSubmit = () => {
-  const newMessage = {
-    userType: "current", // Include the user ID
-    body: message.value,
-    username: props.username,
-    time: moment().format("LT"),
-  };
-
-  console.log("New Message", newMessage);
-
+const handleSubmit = async () => {
   if (message.value.trim()) {
-    receiveMessage(newMessage);
+    const newMessage = {
+      userId: socket.id, // Include the user ID
+      body: message.value,
+      username: props.username,
+      time: moment().format("LT"),
+    };
     //Send new message to server
-    socket.emit("message", newMessage);
+    console.log("New Message", newMessage);
+    await sendMessage(newMessage);
     message.value = ""; // Clearing the input field
+  }
+};
+
+const sendMessage = async (messageData) => {
+  try {
+    await fetch("/api/message", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(messageData),
+    });
+  } catch (error) {
+    console.error("Error sending message:", error);
+  }
+};
+
+const handleFileChange = async (e) => {
+  image.value = e.target.files[0];
+  console.log("Image Uploaded", image.value);
+};
+
+const handleImageUpload = async (e) => {
+  e.preventDefault();
+
+  if (!image.value) return;
+  const formData = new FormData();
+  formData.append("userId", socket.id);
+  formData.append("image", image.value);
+  formData.append("username", props.username);
+  formData.append("time", moment().format("LT"));
+
+  try {
+    await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+    image.value = null;
+  } catch (error) {
+    console.error("Error uploading image:", error);
   }
 };
 
@@ -93,9 +132,15 @@ onBeforeUnmount(() => {
             class="item px-3 py-1 mb-4"
           >
             <h5 class="name">{{ msg.username }}</h5>
-            <p class="message">
+            <p class="message" v-if="msg.body">
               {{ msg.body }}
             </p>
+            <img
+              v-if="msg.image"
+              :src="`/api/image/${msg._id}`"
+              alt="User uploaded image"
+              class="img-fluid"
+            />
             <p class="time">{{ msg.time }}</p>
           </li>
         </ul>
@@ -133,6 +178,15 @@ onBeforeUnmount(() => {
             </button>
           </div>
         </div>
+      </form>
+      <form>
+        <input type="file" @change="(e) => handleFileChange(e)" />
+        <button
+          @click.prevent="(e) => handleImageUpload(e)"
+          class="btn btn-light"
+        >
+          <MaterialSymbolsImageOutline />
+        </button>
       </form>
     </div>
   </div>
