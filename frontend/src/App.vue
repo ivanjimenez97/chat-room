@@ -2,6 +2,8 @@
 import { ref } from "vue";
 // Import our custom CSS
 import "./assets/scss/styles.scss";
+// Import all of Bootstrap's JS
+import * as bootstrap from 'bootstrap';
 import UserForm from "./components/UserForm.vue";
 import ChatComponent from "./components/ChatComponent.vue";
 
