@@ -139,6 +139,29 @@ app.post("/message", async (req, res) => {
   }
 });
 
+// Search messages by content or username
+app.get("/search/messages", async (req, res) => {
+  const { query } = req.query;
+  if (!query) {
+    return res.status(400).send("Query parameter is required");
+  }
+
+  try {
+    // Find messages that match the query in the body or username
+    const messages = await Message.find({
+      $or: [
+        { body: { $regex: query, $options: "i" } },
+        { username: { $regex: query, $options: "i" } },
+      ],
+    }).sort({ time: 1 });
+
+    res.status(200).json(messages);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error searching messages");
+  }
+});
+
 io.on("connection", (socket) => {
   console.log("New User connected.");
 

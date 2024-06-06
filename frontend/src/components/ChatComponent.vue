@@ -3,12 +3,18 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import io from "socket.io-client";
 import HugeiconsSearch01 from "./icons/HugeiconsSearch01.vue";
+import MaterialSymbolsCancel from "./icons/MaterialSymbolsCancel.vue";
 import MingcuteSendLine from "./icons/MingcuteSendLine.vue";
 import HugeiconsFileUpload from "./icons/HugeiconsFileUpload.vue";
 import MaterialSymbolsImageOutline from "./icons/MaterialSymbolsImageOutline.vue";
 import moment from "moment";
 
 const socket = io("/");
+
+const displaySearchElements = ref(false);
+const searchResults = ref([]);
+const search = ref("");
+const isSearching = ref(false);
 
 const messages = ref([]);
 const message = ref();
@@ -22,6 +28,46 @@ const isFile = ref(true);
 const props = defineProps({
   username: String,
 });
+
+// *** SEARCH METHODS AND VALIDATIONS
+
+const activateSearchElements = (e) => {
+  e.preventDefault();
+  displaySearchElements.value = true;
+};
+
+const deactivateSearchElements = (e) => {
+  e.preventDefault();
+  displaySearchElements.value = false;
+  clearSearch();
+};
+
+const handleSearch = async () => {
+  if (!search.value.trim()) {
+    isSearching.value = false;
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `/api/search/messages?query=${encodeURIComponent(search.value.trim())}`
+    );
+    if (response.ok) {
+      const result = await response.json();
+      searchResults.value = result;
+      isSearching.value = true;
+    } else {
+      console.error("Error searching messages:", response.statusText);
+    }
+  } catch (error) {
+    console.error("Error searching messages:", error);
+  }
+};
+
+const clearSearch = () => {
+  search.value = "";
+  isSearching.value = false;
+};
 
 const handleSubmit = async () => {
   if (message.value.trim()) {
@@ -193,23 +239,55 @@ onBeforeUnmount(() => {
       class="card-header bg-white border-bottom border-secondary border-opacity-10"
     >
       <div class="row">
-        <div class="col-8 my-auto">
-          <h1 class="text-dark screen-title">Chat Room!</h1>
+        <div class="col-12 col-md-6 my-auto">
+          <h2
+            class="text-center text-primary fw-bold text-center text-md-start"
+          >
+            Chat Room
+          </h2>
         </div>
-        <div class="col-4 my-auto text-end">
-          <button class="btn">
+        <!-- Search Elements Starts here-->
+        <div class="col-10 col-md-5 my-auto text-end">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Search in Chat"
+            v-if="displaySearchElements"
+            v-model="search"
+            @input="handleSearch"
+          />
+        </div>
+        <div class="col-2 col-md-1 text-center px-0">
+          <button
+            type="button"
+            class="btn btn-light my-auto"
+            v-if="displaySearchElements"
+            @click="deactivateSearchElements"
+          >
+            <MaterialSymbolsCancel />
+          </button>
+          <button
+            type="button"
+            class="btn btn-light my-auto"
+            v-if="!displaySearchElements"
+            @click="activateSearchElements"
+          >
             <HugeiconsSearch01 />
           </button>
         </div>
+        <!-- Search Elements ends here-->
       </div>
     </div>
 
     <!-- Card Content -->
     <div class="card-body bg-white">
       <div class="chat">
-        <ul class="content" v-if="messages.length > 0">
+        <ul
+          class="content"
+          v-if="isSearching ? searchResults.length > 0 : messages.length > 0"
+        >
           <li
-            v-for="msg in messages"
+            v-for="msg in isSearching ? searchResults : messages"
             :key="msg.id"
             :class="{
               'current-user': msg.username === props.username,
@@ -248,8 +326,8 @@ onBeforeUnmount(() => {
             <p class="time">{{ msg.time }}</p>
           </li>
         </ul>
-        <div class="alert alert-primary" role="alert" v-else>
-          Aun no tenemos mensajes para mostrar.
+        <div class="alert alert-warning" role="alert" v-else>
+          Messages not found
         </div>
       </div>
     </div>
