@@ -18,6 +18,13 @@ const isSearching = ref(false);
 
 const messages = ref([]);
 const message = ref();
+
+// Pagination state
+const page = ref(1);
+const limit = 10;
+const isLoading = ref(false);
+
+//File Variables
 const image = ref(null);
 const imageInput = ref(null);
 const isImage = ref(true);
@@ -95,6 +102,27 @@ const sendMessage = async (messageData) => {
     });
   } catch (error) {
     console.error("Error sending message:", error);
+  }
+};
+
+// Get More Messages
+const fetchMessages = async () => {
+  isLoading.value = true;
+  try {
+    const response = await fetch(
+      `/api/messages?page=${page.value}&limit=${limit}`
+    );
+    if (response.ok) {
+      const result = await response.json();
+      messages.value.unshift(...result);
+      page.value++;
+    } else {
+      console.error("Error fetching messages:", response.statusText);
+    }
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -207,6 +235,13 @@ const receiveMessage = (message) => {
   messages.value.unshift(message);
 };
 
+const handleScroll = (e) => {
+  if (e.target.scrollTop < -450 && !isLoading.value) {
+    fetchMessages();
+  }
+};
+
+//Loading Chat History
 socket.on("chat history", (history) => {
   console.log("History : ", history);
   messages.value = history;
@@ -224,12 +259,15 @@ socket.on("notification", (notification) => {
 
 onMounted(() => {
   socket.connect();
+  fetchMessages(); // Fetch the first batch of messages
+  document.querySelector(".chat").addEventListener("scroll", handleScroll);
 });
 
 // Clean up when component is unmounted
 onBeforeUnmount(() => {
   socket.off("message", receiveMessage);
   socket.disconnect();
+  document.querySelector(".chat").removeEventListener("scroll", handleScroll);
 });
 </script>
 

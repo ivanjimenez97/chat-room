@@ -10,13 +10,13 @@ body {
   }
 
   .chat {
+    min-height: 350px;
+    max-height: 450px;
+    overflow-y: scroll;
+    display: flex;
+    flex-direction: column-reverse;
     .content {
       list-style: none;
-      min-height: 350px;
-      max-height: 450px;
-      overflow-y: scroll;
-      display: flex;
-      flex-direction: column-reverse;
       .item {
         max-width: 80%;
         width: fit-content;

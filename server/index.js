@@ -162,15 +162,29 @@ app.get("/search/messages", async (req, res) => {
   }
 });
 
+app.get("/messages", async (req, res) => {
+  const { page = 1, limit = 10 } = req.query; // Get page and limit from query, default to 1 and 10 respectively
+  try {
+    const messages = await Message.find()
+      .sort({ time: -1 }) // Sort by time in descending order
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+    res.status(200).json(messages.reverse());
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error fetching messages");
+  }
+});
+
 io.on("connection", (socket) => {
   console.log("New User connected.");
 
   // Send existing chat history to the new user
   Message.find()
     .sort({ time: -1 }) // Sort messages by time in descending order
-    .limit(50)
+    .limit(10)
     .then((messages) => {
-      socket.emit("chat history", messages);
+      socket.emit("chat history", messages.reverse());
     })
     .catch((error) => {
       console.log(error);
