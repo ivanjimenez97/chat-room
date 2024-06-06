@@ -1,4 +1,5 @@
 <script setup>
+//ChatComponent.vue
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import io from "socket.io-client";
 import HugeiconsSearch01 from "./icons/HugeiconsSearch01.vue";
@@ -12,6 +13,9 @@ const messages = ref([]);
 const message = ref();
 const image = ref(null);
 const imageInput = ref(null);
+const isImage = ref(true);
+const file = ref(null);
+const fileInput = ref(null);
 
 const props = defineProps({
   username: String,
@@ -46,9 +50,22 @@ const sendMessage = async (messageData) => {
   }
 };
 
-const handleFileChange = async (e) => {
-  image.value = e.target.files[0];
-  console.log("Image Uploaded", image.value);
+const isValidImage = (image) => {
+  const validImageTypes = ["image/jpg", "image/jpeg", "image/png", "image/gif"];
+  return validImageTypes.includes(image.type);
+};
+
+const handleImageChange = async (e) => {
+  const selectedImage = e.target.files[0];
+  if (selectedImage && isValidImage(selectedImage)) {
+    isImage.value = true;
+    image.value = e.target.files[0];
+    console.log("Image Uploaded", image.value);
+  } else {
+    //alert("Invalid File Type. Please select a JPG, PNG or GIF File.");
+    isImage.value = false;
+    imageInput.value.value = "";
+  }
 };
 
 const handleImageUpload = async (e) => {
@@ -67,10 +84,16 @@ const handleImageUpload = async (e) => {
       body: formData,
     });
     image.value = null;
-    imageInput.value.value = '';
+    imageInput.value.value = "";
   } catch (error) {
     console.error("Error uploading image:", error);
   }
+};
+
+const resetImageValues = async () => {
+  image.value = null;
+  imageInput.value.value = null;
+  isImage.value = true;
 };
 
 //Listen for new messages
@@ -106,7 +129,9 @@ onBeforeUnmount(() => {
 <template>
   <div class="card shadow-none border-0">
     <!-- Card Header -->
-    <div class="card-header bg-white border-bottom border-secondary border-opacity-10">
+    <div
+      class="card-header bg-white border-bottom border-secondary border-opacity-10"
+    >
       <div class="row">
         <div class="col-8 my-auto">
           <h1 class="text-dark screen-title">Chat Room!</h1>
@@ -123,15 +148,25 @@ onBeforeUnmount(() => {
     <div class="card-body bg-white">
       <div class="chat">
         <ul class="content" v-if="messages.length > 0">
-          <li v-for="msg in messages" :key="msg.id" :class="{
-          'current-user': msg.username === props.username,
-          'roommate-user': msg.username !== props.username,
-        }" class="item px-3 py-1 mb-4">
+          <li
+            v-for="msg in messages"
+            :key="msg.id"
+            :class="{
+              'current-user': msg.username === props.username,
+              'roommate-user': msg.username !== props.username,
+            }"
+            class="item px-3 py-1 mb-4"
+          >
             <h5 class="name">{{ msg.username }}</h5>
             <p class="message" v-if="msg.body">
               {{ msg.body }}
             </p>
-            <img v-if="msg.image" :src="`/api/image/${msg._id}`" alt="User uploaded image" class="img-fluid image" />
+            <img
+              v-if="msg.image"
+              :src="`/api/image/${msg._id}`"
+              alt="User uploaded image"
+              class="img-fluid image"
+            />
             <p class="time">{{ msg.time }}</p>
           </li>
         </ul>
@@ -142,20 +177,35 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Card Footer -->
-    <div class="card-footer bg-white border-top border-secondary border-opacity-10 pt-4 pb-3">
+    <div
+      class="card-footer bg-white border-top border-secondary border-opacity-10 pt-4 pb-3"
+    >
       <form @submit.prevent="handleSubmit">
         <div class="row">
           <div class="col-9 col-sm-10 my-auto">
-            <textarea name="message" id="message" placeholder="Type a message" class="form-control border-0"
-              v-model="message"></textarea>
+            <textarea
+              name="message"
+              id="message"
+              placeholder="Type a message"
+              class="form-control border-0"
+              v-model="message"
+            ></textarea>
           </div>
           <div class="col-3 col-sm-2 my-auto text-center text-md-end">
-
-            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-              data-bs-target="#uploadImageModal" v-if="!message">
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              data-bs-toggle="modal"
+              data-bs-target="#uploadImageModal"
+              v-if="!message"
+            >
               <MaterialSymbolsImageOutline />
             </button>
-            <button class="btn btn-primary my-auto px-md-3" type="submit" v-if="message">
+            <button
+              class="btn btn-primary my-auto px-md-3"
+              type="submit"
+              v-if="message"
+            >
               <div class="row">
                 <div class="col text-center d-none d-md-block pe-md-1">
                   Send
@@ -171,23 +221,59 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Upload Image Modal -->
-    <div class="modal fade" id="uploadImageModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
-      aria-labelledby="uploadImageModal" aria-hidden="true">
+    <div
+      class="modal fade"
+      id="uploadImageModal"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+      tabindex="-1"
+      aria-labelledby="uploadImageModal"
+      aria-hidden="true"
+    >
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title fs-5" id="uploadImageModal">Choose an image to upload...</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <h5 class="modal-title fs-5" id="uploadImageModal">
+              Choose an image to upload...
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+              @click="resetImageValues"
+            ></button>
           </div>
           <div class="modal-body">
+            <!-- Display Alert just in case the element uploaded is a wrong type file. -->
+            <div class="alert alert-danger" role="alert" v-if="!isImage">
+              <strong>Attention!</strong>
+              <br />
+              Invalid File Type. Please select a JPG, PNG or GIF File.
+            </div>
             <!-- Image is uploaded on this input -->
-              <input type="file" ref="imageInput" @change="(e) => handleFileChange(e)" />
+            <input
+              type="file"
+              ref="imageInput"
+              @change="(e) => handleImageChange(e)"
+            />
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            <button
+              type="button"
+              class="btn btn-light"
+              data-bs-dismiss="modal"
+              @click="resetImageValues"
+            >
+              Close
+            </button>
             <!-- Image is sent by clicking this button -->
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal"
-              @click.prevent="(e) => handleImageUpload(e)">
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-bs-dismiss="modal"
+              @click.prevent="(e) => handleImageUpload(e)"
+            >
               <div class="row">
                 <div class="col text-center d-none d-md-block pe-md-1">
                   Send

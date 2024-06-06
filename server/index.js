@@ -1,3 +1,4 @@
+//Root Directory/server/index.js
 import dotenv from "dotenv";
 import express from "express";
 import { connectDB } from "./db.js";
