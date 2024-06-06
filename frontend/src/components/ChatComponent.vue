@@ -235,13 +235,13 @@ onBeforeUnmount(() => {
               <a
                 :href="`/api/file/${msg._id}`"
                 target="_blank"
-                class="btn btn-sm btn-secondary"
+                class="btn btn-sm btn-secondary mx-2"
                 >Abrir</a
               >
               <a
                 :href="`/api/file/${msg._id}`"
                 download
-                class="btn btn-sm btn-secondary ms-2"
+                class="btn btn-sm btn-secondary mx-2"
                 >Download</a
               >
             </div>
