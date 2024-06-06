@@ -4,6 +4,7 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import io from "socket.io-client";
 import HugeiconsSearch01 from "./icons/HugeiconsSearch01.vue";
 import MingcuteSendLine from "./icons/MingcuteSendLine.vue";
+import HugeiconsFileUpload from "./icons/HugeiconsFileUpload.vue";
 import MaterialSymbolsImageOutline from "./icons/MaterialSymbolsImageOutline.vue";
 import moment from "moment";
 
@@ -16,6 +17,7 @@ const imageInput = ref(null);
 const isImage = ref(true);
 const file = ref(null);
 const fileInput = ref(null);
+const isFile = ref(true);
 
 const props = defineProps({
   username: String,
@@ -50,6 +52,8 @@ const sendMessage = async (messageData) => {
   }
 };
 
+// *** UPLOADING AMD SENDING IMAGE METHODS ***
+
 const isValidImage = (image) => {
   const validImageTypes = ["image/jpg", "image/jpeg", "image/png", "image/gif"];
   return validImageTypes.includes(image.type);
@@ -62,7 +66,7 @@ const handleImageChange = async (e) => {
     image.value = e.target.files[0];
     console.log("Image Uploaded", image.value);
   } else {
-    //alert("Invalid File Type. Please select a JPG, PNG or GIF File.");
+    //When this variable is set to false an alert will be displayed on the modal.
     isImage.value = false;
     imageInput.value.value = "";
   }
@@ -79,7 +83,7 @@ const handleImageUpload = async (e) => {
   formData.append("time", moment().format("LT"));
 
   try {
-    await fetch("/api/upload", {
+    await fetch("/api/upload/image", {
       method: "POST",
       body: formData,
     });
@@ -94,6 +98,62 @@ const resetImageValues = async () => {
   image.value = null;
   imageInput.value.value = null;
   isImage.value = true;
+};
+
+// *** UPLOAD FILE METHODS ***
+
+const isValidFile = (file) => {
+  const validFileTypes = [
+    "application/pdf",
+    "text/plain",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv",
+  ];
+  return validFileTypes.includes(file.type);
+};
+
+const handleFileChange = async (e) => {
+  const selectedFile = e.target.files[0];
+  if (selectedFile && isValidFile(selectedFile)) {
+    isFile.value = true;
+    file.value = e.target.files[0];
+    console.log("File Uploaded", file.value);
+  } else {
+    //When this variable is set to false an alert will be displayed on the modal.
+    isFile.value = false;
+    fileInput.value.value = "";
+  }
+};
+
+const handleFileUpload = async (e) => {
+  e.preventDefault();
+
+  if (!file.value) return;
+  const formData = new FormData();
+  formData.append("userId", socket.id);
+  formData.append("file", file.value);
+  formData.append("username", props.username);
+  formData.append("time", moment().format("LT"));
+
+  try {
+    await fetch("/api/upload/file", {
+      method: "POST",
+      body: formData,
+    });
+    file.value = null;
+    fileInput.value.value = "";
+  } catch (error) {
+    console.error("Error uploading file:", error);
+  }
+};
+
+const resetFileValues = async () => {
+  file.value = null;
+  fileInput.value.value = null;
+  isFile.value = true;
 };
 
 //Listen for new messages
@@ -161,12 +221,30 @@ onBeforeUnmount(() => {
             <p class="message" v-if="msg.body">
               {{ msg.body }}
             </p>
+            <!-- Image -->
             <img
               v-if="msg.image"
               :src="`/api/image/${msg._id}`"
               alt="User uploaded image"
               class="img-fluid image"
             />
+            <!-- File -->
+            <div class="file" v-if="msg.file">
+              <p class="title mb-2">{{ msg.file.name }}</p>
+              <!--Improvement: We can add the File Size-->
+              <a
+                :href="`/api/file/${msg._id}`"
+                target="_blank"
+                class="btn btn-sm btn-secondary"
+                >Abrir</a
+              >
+              <a
+                :href="`/api/file/${msg._id}`"
+                download
+                class="btn btn-sm btn-secondary ms-2"
+                >Download</a
+              >
+            </div>
             <p class="time">{{ msg.time }}</p>
           </li>
         </ul>
@@ -182,7 +260,7 @@ onBeforeUnmount(() => {
     >
       <form @submit.prevent="handleSubmit">
         <div class="row">
-          <div class="col-9 col-sm-10 my-auto">
+          <div class="col-9 col-lg-10 my-auto">
             <textarea
               name="message"
               id="message"
@@ -191,30 +269,52 @@ onBeforeUnmount(() => {
               v-model="message"
             ></textarea>
           </div>
-          <div class="col-3 col-sm-2 my-auto text-center text-md-end">
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              data-bs-toggle="modal"
-              data-bs-target="#uploadImageModal"
-              v-if="!message"
-            >
-              <MaterialSymbolsImageOutline />
-            </button>
-            <button
-              class="btn btn-primary my-auto px-md-3"
-              type="submit"
-              v-if="message"
-            >
-              <div class="row">
-                <div class="col text-center d-none d-md-block pe-md-1">
-                  Send
-                </div>
-                <div class="col text-center ps-md-0">
-                  <MingcuteSendLine />
-                </div>
+          <div class="col-3 col-lg-2 my-auto text-center text-md-end">
+            <div class="row">
+              <div class="col-12 col-md-6 text-center text-lg-end">
+                <!-- Show Upload Image Modal -->
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary mb-2 mb-md-0 mb-lg-3"
+                  data-bs-toggle="modal"
+                  data-bs-target="#uploadImageModal"
+                  title="Show Upload Image Modal"
+                  v-if="!message"
+                >
+                  <MaterialSymbolsImageOutline />
+                </button>
               </div>
-            </button>
+              <div class="col-12 col-md-6 text-center text-lg-start">
+                <!-- Show Upload File Modal -->
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#uploadFileModal"
+                  v-if="!message"
+                  title="Show Upload File Modal"
+                >
+                  <HugeiconsFileUpload />
+                </button>
+              </div>
+              <div class="col-12">
+                <!-- Button To send a message -->
+                <button
+                  class="btn btn-primary my-auto px-md-3"
+                  type="submit"
+                  v-if="message"
+                >
+                  <div class="row">
+                    <div class="col text-center d-none d-md-block pe-md-1">
+                      Send
+                    </div>
+                    <div class="col text-center ps-md-0">
+                      <MingcuteSendLine />
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </form>
@@ -227,13 +327,13 @@ onBeforeUnmount(() => {
       data-bs-backdrop="static"
       data-bs-keyboard="false"
       tabindex="-1"
-      aria-labelledby="uploadImageModal"
+      aria-labelledby="uploadImageModalLabel"
       aria-hidden="true"
     >
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title fs-5" id="uploadImageModal">
+            <h5 class="modal-title fs-5" id="uploadImageModalLabel">
               Choose an image to upload...
             </h5>
             <button
@@ -273,6 +373,74 @@ onBeforeUnmount(() => {
               class="btn btn-primary"
               data-bs-dismiss="modal"
               @click.prevent="(e) => handleImageUpload(e)"
+            >
+              <div class="row">
+                <div class="col text-center d-none d-md-block pe-md-1">
+                  Send
+                </div>
+                <div class="col text-center ps-md-0">
+                  <MingcuteSendLine />
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload File Modal -->
+    <div
+      class="modal fade"
+      id="uploadFileModal"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+      tabindex="-1"
+      aria-labelledby="uploadFileModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title fs-5" id="uploadFileModalLabel">
+              Choose a File to upload...
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+              @click="resetFileValues"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <!-- Display Alert just in case the element uploaded is a wrong type file. -->
+            <div class="alert alert-danger" role="alert" v-if="!isFile">
+              <strong>Attention!</strong>
+              <br />
+              Invalid File Type. Please select a PDF, CSV, TXT, DOCX or XLSX.
+            </div>
+            <!-- File is uploaded on this input -->
+            <input
+              type="file"
+              ref="fileInput"
+              @change="(e) => handleFileChange(e)"
+            />
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-light"
+              data-bs-dismiss="modal"
+              @click="resetFileValues"
+            >
+              Close
+            </button>
+            <!-- File is sent by clicking this button -->
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-bs-dismiss="modal"
+              @click.prevent="(e) => handleFileUpload(e)"
             >
               <div class="row">
                 <div class="col text-center d-none d-md-block pe-md-1">

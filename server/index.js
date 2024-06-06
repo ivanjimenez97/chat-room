@@ -25,9 +25,19 @@ app.use(express.json());
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+//Image Verification Method
+const isImage = (mimetype) => {
+  const validImageTypes = ["image/jpeg", "image/png", "image/gif"];
+  return validImageTypes.includes(mimetype);
+};
+
 //Upload Image and send a message
-app.post("/upload", upload.single("image"), async (req, res) => {
+app.post("/upload/image", upload.single("image"), async (req, res) => {
   const { userId, username, time } = req.body;
+
+  if (!isImage(req.file.mimetype)) {
+    return res.status(400).send("Invalid image type.");
+  }
 
   const newMessage = new Message({
     userId,
@@ -44,6 +54,66 @@ app.post("/upload", upload.single("image"), async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).send("Error uploading image");
+  }
+});
+
+//Serve images from mongodb as binary data
+app.get("/image/:id", async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.id);
+    if (!message || !message.image) {
+      return res.status(404).send("Image not found");
+    }
+    res.contentType("image/png");
+    res.send(message.image);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error fetching image");
+  }
+});
+
+//Upload File and Send a Message
+app.post("/upload/file", upload.single("file"), async (req, res) => {
+  const { userId, username, time } = req.body;
+
+  const newMessage = new Message({
+    userId,
+    username,
+    file: {
+      name: req.file.originalname,
+      buffer: req.file.buffer,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+    },
+    time,
+  });
+
+  try {
+    await newMessage.save();
+    io.emit("message", newMessage);
+    res.status(200).send("File uploaded successfully");
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error uploading file");
+  }
+});
+
+//Serve files from mongodb as binary data
+app.get("/file/:id", async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.id);
+    if (!message || !message.file) {
+      return res.status(404).send("File not found");
+    }
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${message.file.name}"`
+    );
+    res.contentType(message.file.mimetype);
+    res.send(message.file.buffer);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error fetching file");
   }
 });
 
@@ -66,21 +136,6 @@ app.post("/message", async (req, res) => {
   } catch (error) {
     res.status(500).send("Error sending message");
     console.log(error);
-  }
-});
-
-//Serve images from mongodb as binary data
-app.get("/image/:id", async (req, res) => {
-  try {
-    const message = await Message.findById(req.params.id);
-    if (!message || !message.image) {
-      return res.status(404).send("Image not found");
-    }
-    res.contentType("image/png");
-    res.send(message.image);
-  } catch (error) {
-    console.log(error);
-    res.status(500).send("Error fetching image");
   }
 });
 
