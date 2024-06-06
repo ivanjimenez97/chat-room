@@ -153,7 +153,7 @@ app.get("/search/messages", async (req, res) => {
         { body: { $regex: query, $options: "i" } },
         { username: { $regex: query, $options: "i" } },
       ],
-    }).sort({ time: 1 });
+    }).sort({ time: -1 });
 
     res.status(200).json(messages);
   } catch (error) {
@@ -167,7 +167,7 @@ io.on("connection", (socket) => {
 
   // Send existing chat history to the new user
   Message.find()
-    .sort({ time: 1 })
+    .sort({ time: -1 }) // Sort messages by time in descending order
     .limit(50)
     .then((messages) => {
       socket.emit("chat history", messages);

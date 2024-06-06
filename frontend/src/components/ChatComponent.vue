@@ -75,7 +75,7 @@ const handleSubmit = async () => {
       userId: socket.id, // Include the user ID
       body: message.value,
       username: props.username,
-      time: moment().format("LT"),
+      time: moment().format("LTS"),
     };
     //Send new message to server
     console.log("New Message", newMessage);
@@ -126,7 +126,7 @@ const handleImageUpload = async (e) => {
   formData.append("userId", socket.id);
   formData.append("image", image.value);
   formData.append("username", props.username);
-  formData.append("time", moment().format("LT"));
+  formData.append("time", moment().format("LTS"));
 
   try {
     await fetch("/api/upload/image", {
@@ -182,7 +182,7 @@ const handleFileUpload = async (e) => {
   formData.append("userId", socket.id);
   formData.append("file", file.value);
   formData.append("username", props.username);
-  formData.append("time", moment().format("LT"));
+  formData.append("time", moment().format("LTS"));
 
   try {
     await fetch("/api/upload/file", {
@@ -204,10 +204,11 @@ const resetFileValues = async () => {
 
 //Listen for new messages
 const receiveMessage = (message) => {
-  messages.value.push(message);
+  messages.value.unshift(message);
 };
 
 socket.on("chat history", (history) => {
+  console.log("History : ", history);
   messages.value = history;
 });
 
@@ -323,11 +324,13 @@ onBeforeUnmount(() => {
                 >Download</a
               >
             </div>
-            <p class="time">{{ msg.time }}</p>
+            <p class="time">
+              {{ moment(msg.time, "hh:mm:ss A").format("hh:mm A") }}
+            </p>
           </li>
         </ul>
         <div class="alert alert-warning" role="alert" v-else>
-          Messages not found
+          Messages not found.
         </div>
       </div>
     </div>
