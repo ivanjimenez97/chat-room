@@ -131,7 +131,7 @@ onBeforeUnmount(() => {
             <p class="message" v-if="msg.body">
               {{ msg.body }}
             </p>
-            <img v-if="msg.image" :src="`/api/image/${msg._id}`" alt="User uploaded image" class="img-fluid" />
+            <img v-if="msg.image" :src="`/api/image/${msg._id}`" alt="User uploaded image" class="img-fluid image" />
             <p class="time">{{ msg.time }}</p>
           </li>
         </ul>
