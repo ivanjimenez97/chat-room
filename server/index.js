@@ -105,11 +105,11 @@ app.get("/file/:id", async (req, res) => {
     if (!message || !message.file) {
       return res.status(404).send("File not found");
     }
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${message.file.name}"`
-    );
-    res.contentType(message.file.mimetype);
+
+    // Set headers
+    res.set("Content-Type", message.file.mimetype);
+    res.set("Content-Disposition", `inline; filename="${message.file.name}"`);
+
     res.send(message.file.buffer);
   } catch (error) {
     console.log(error);
