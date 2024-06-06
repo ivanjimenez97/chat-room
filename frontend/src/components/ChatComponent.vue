@@ -232,11 +232,11 @@ const resetFileValues = async () => {
 
 //Listen for new messages
 const receiveMessage = (message) => {
-  messages.value.unshift(message);
+  messages.value.push(message);
 };
 
 const handleScroll = (e) => {
-  if (e.target.scrollTop < -450 && !isLoading.value) {
+  if (e.target.scrollTop < -100 && !isLoading.value) {
     fetchMessages();
   }
 };
